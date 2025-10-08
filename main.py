@@ -21,3 +21,15 @@ async def home():
         </body>
     </html>
     """
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    file_bytes = await file.read()
+    try:
+        cleaned_bytes = process_file(file_bytes, file.filename)
+        return StreamingResponse(
+            io.BytesIO(cleaned_bytes),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=cleaned_{file.filename.split('.')[0]}.xlsx"}
+        )
+    except Exception as e:
+        return {"error": str(e)}
