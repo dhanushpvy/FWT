@@ -1,35 +1,23 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import StreamingResponse
-import pandas as pd
+# main.py
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import StreamingResponse, HTMLResponse
+from cleanup import process_file
 import io
-from cleanup import cleanup_sheet
 
-app = FastAPI(title="Excel Table Cleanup API")
+app = FastAPI(title="Smart Table Alignment Tool")
 
-@app.post("/cleanup")
-async def cleanup(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(('.xls', '.xlsx')):
-        raise HTTPException(status_code=400, detail="Only .xls/.xlsx files supported")
-
-    contents = await file.read()
-    in_mem = io.BytesIO(contents)
-
-    try:
-        xls = pd.read_excel(in_mem, sheet_name=None, engine='openpyxl')
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Cannot read Excel: {e}")
-
-    cleaned_sheets = {}
-    for sheet_name, df in xls.items():
-        cleaned_sheets[sheet_name] = cleanup_sheet(df)
-
-    out_mem = io.BytesIO()
-    with pd.ExcelWriter(out_mem, engine='openpyxl') as writer:
-        for sheet_name, df in cleaned_sheets.items():
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-        writer.save()
-
-    out_mem.seek(0)
-    filename = f"cleaned_{file.filename}"
-    headers = {'Content-Disposition': f'attachment; filename=\"{filename}\"'}
-    return StreamingResponse(out_mem, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers=headers)
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    return """
+    <html>
+        <head><title>Table Alignment Tool</title></head>
+        <body style="font-family:sans-serif;text-align:center;padding:50px">
+            <h2>📊 Smart Table Alignment Tool</h2>
+            <form action="/upload" enctype="multipart/form-data" method="post">
+                <input name="file" type="file" accept=".docx,.pdf,.xlsx" required/>
+                <br><br>
+                <input type="submit" value="Upload & Clean"/>
+            </form>
+        </body>
+    </html>
+    """
