@@ -1,26 +1,17 @@
+# cleanup.py
 import pandas as pd
+import pdfplumber
+from docx import Document
+import io
 
-def merge_broken_rows(df: pd.DataFrame) -> pd.DataFrame:
-    out_rows = []
-    prev = None
-    for _, row in df.iterrows():
-        non_null_count = row.count()
-        total = len(row)
-        # Consider row broken if <30% filled
-        if prev is not None and (non_null_count / total) <= 0.3:
-            for col in df.columns:
-                val = row[col]
-                if pd.isna(val):
-                    continue
-                if pd.isna(prev[col]):
-                    prev[col] = val
-                else:
-                    prev[col] = str(prev[col]).rstrip() + " " + str(val).lstrip()
-        else:
-            if prev is not None:
-                out_rows.append(prev)
-            prev = row.copy()
-    if prev is not None:
-        out_rows.append(prev)
-    new_df = pd.DataFrame(out_rows).reset_index(drop=True)
-    return new_df
+def read_docx_tables(file_bytes: bytes):
+    """Extracts tables from a Word document (.docx)."""
+    doc = Document(io.BytesIO(file_bytes))
+    tables = []
+    for table in doc.tables:
+        data = []
+        for row in table.rows:
+            data.append([cell.text.strip() for cell in row.cells])
+        if data:
+            tables.append(pd.DataFrame(data))
+    return tables
