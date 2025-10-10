@@ -119,3 +119,80 @@ def extract_paragraph_data(doc):
     # Title-case column names
     df.columns = [c.strip().title() for c in df.columns]
     return df
+    ef clean_table(df: pd.DataFrame) -> pd.DataFrame:
+    """Cleans up misaligned, merged, or blank rows without reordering columns."""
+    df = df.dropna(how="all").reset_index(drop=True)
+
+    # Shift non-empty cells left if there are blanks (count non-empty values correctly)
+    def _shift_row(row):
+        values = [x for x in row if (pd.notna(x) and str(x).strip() != "")]
+        return pd.Series(values + [None] * (len(row) - len(values)))
+
+    df = df.apply(_shift_row, axis=1)
+
+    # Dynamically detect whether the first row is a header row.
+    # Heuristics used:
+    # - If a majority of first-row cells look like short alphabetic labels (no digits)
+    #   and there are few or no numeric-looking tokens, treat as header.
+    # - Also check column-wise: if first-row value in a column looks non-numeric but
+    #   the next few rows in that column are mostly numeric, that's a strong signal
+    #   the first row is a header for that column.
+    def _looks_like_header_row(row, df):
+        row_vals = [str(x).strip() for x in row.tolist()]
+        non_empty = [v for v in row_vals if v and v.lower() not in ("nan", "none")]
+        if len(non_empty) == 0:
+            return False
+
+        # tokens that look like header labels (mostly letters, spaces and punctuation)
+        header_like = sum(1 for v in non_empty if re.match(r'^[A-Za-z\s\-\_/&()\.]+$', v) and len(v) <= 60)
+        # tokens that look numeric
+        numeric_like = sum(1 for v in non_empty if re.match(r'^-?\d+(?:\.\d+)?$', v))
+
+        # If majority of non-empty cells look like textual labels and few numeric tokens
+        if header_like >= max(1, len(df.columns) // 2) and numeric_like == 0:
+            return True
+
+        # Column-wise check: if first row is non-numeric and the rows beneath are mostly numeric
+        col_votes = 0
+        rows_to_check = min(5, max(0, len(df) - 1))
+        if rows_to_check > 0:
+            for i, v in enumerate(row_vals):
+                if v == "":
+                    continue
+                is_header_token = not re.match(r'^-?\d+(?:\.\d+)?$', v)
+                below = df.iloc[1:1 + rows_to_check, i].astype(str).str.strip().tolist()
+                below_numeric = sum(1 for b in below if re.match(r'^-?\d+(?:\.\d+)?$', b))
+                if is_header_token and below_numeric >= rows_to_check / 2:
+                    col_votes += 1
+            # if a reasonable fraction of columns suggest header->data relationship
+            if col_votes >= max(1, len(df.columns) // 3):
+                return True
+
+        return False
+
+    if _looks_like_header_row(df.iloc[0], df):
+        # Use first row as header
+        df.columns = [str(c).strip().title() for c in df.iloc[0]]
+        data = df[1:].reset_index(drop=True)
+    else:
+        # No header detected — assign generic column names
+        num_cols = df.shape[1]
+        default_headers = [f"Col{i+1}" for i in range(num_cols)]
+        df.columns = default_headers
+        data = df.reset_index(drop=True)
+
+    # Normalize empty strings to NA and strip strings
+    def _clean_cell(x):
+        if pd.isna(x):
+            return pd.NA
+        if isinstance(x, str):
+            s = x.strip()
+            return s if s != "" else pd.NA
+        return x
+
+    data = data.applymap(_clean_cell)
+
+    # Only drop rows that are completely empty; keep rows with some missing cells
+    data = data.dropna(how='all').reset_index(drop=True)
+
+    return data
