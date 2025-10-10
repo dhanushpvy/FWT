@@ -1,4 +1,4 @@
-# ExcelPractice - Data cleanup utility
+# Excel - Data cleanup utility
 
 This repository contains a small Python utility to extract tabular data from Word (`.docx`), PDF (`.pdf`), and Excel (`.xlsx`) files, clean and normalize the tables, and export the cleaned tables into an Excel workbook.
 
