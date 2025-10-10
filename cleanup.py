@@ -27,6 +27,38 @@ def read_docx_tables(file_bytes: bytes):
 
     return tables
 
+def read_pdf_tables(file_bytes: bytes):
+    """Extracts tables from a PDF file using pdfplumber.
+
+    Also attempts to extract colon-separated paragraph records (Key: Value) from
+    the page text and returns them as a DataFrame when present.
+    """
+    try:
+        import pdfplumber
+    except Exception as e:
+        raise ImportError("pdfplumber is required to read .pdf files. Install with `pip install pdfplumber`") from e
+
+    tables = []
+    text_blocks = []
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            extracted = page.extract_table()
+            if extracted:
+                tables.append(pd.DataFrame(extracted))
+            # collect text for paragraph parsing
+            page_text = page.extract_text()
+            if page_text:
+                text_blocks.append(page_text)
+
+    # try to parse paragraph-style key:value records from the text
+    if text_blocks:
+        pdf_para_df = extract_paragraph_data_from_text("\n".join(text_blocks))
+        if pdf_para_df is not None:
+            tables.append(pdf_para_df)
+
+    return tables
+
+
 
 
 
