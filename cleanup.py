@@ -58,6 +58,11 @@ def read_pdf_tables(file_bytes: bytes):
 
     return tables
 
+def read_excel(file_bytes: bytes):
+    """Reads an Excel file into DataFrames."""
+    excel_data = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None)
+    return list(excel_data.values())
+
 
 
 
