@@ -124,7 +124,9 @@ def extract_paragraph_data(doc):
     # Title-case column names
     df.columns = [c.strip().title() for c in df.columns]
     return df
-    ef clean_table(df: pd.DataFrame) -> pd.DataFrame:
+
+
+def clean_table(df: pd.DataFrame) -> pd.DataFrame:
     """Cleans up misaligned, merged, or blank rows without reordering columns."""
     df = df.dropna(how="all").reset_index(drop=True)
 
