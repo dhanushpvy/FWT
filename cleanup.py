@@ -203,3 +203,31 @@ def clean_table(df: pd.DataFrame) -> pd.DataFrame:
     data = data.dropna(how='all').reset_index(drop=True)
 
     return data
+def process_file(file_bytes: bytes, filename: str) -> bytes:
+    """Main processing function."""
+    if filename.endswith(".docx"):
+        tables = read_docx_tables(file_bytes)
+elif filename.endswith(".pdf"):
+        tables = read_pdf_tables(file_bytes)
+    elif filename.endswith(".xlsx"):
+        tables = read_excel(file_bytes)
+    else:
+        raise ValueError("Unsupported file type")
+    cleaned_tables = []
+    for t in tables:
+        if not isinstance(t, pd.DataFrame) or t.empty:
+            continue
+        try:
+            cleaned_tables.append(clean_table(t))
+        except Exception:
+            cleaned_tables.append(t)
+
+    # Write all cleaned tables to Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for i, table in enumerate(cleaned_tables):
+            sheet_name = f"Table_{i+1}"
+            table.to_excel(writer, index=False, sheet_name=sheet_name)
+    output.seek(0)
+    return output.getvalue()
+
