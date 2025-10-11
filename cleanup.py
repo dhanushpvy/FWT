@@ -3,6 +3,7 @@ import pandas as pd
 import io
 import re
 
+
 def read_docx_tables(file_bytes: bytes):
     """Extracts tables from a Word document (.docx)."""
     try:
@@ -20,12 +21,13 @@ def read_docx_tables(file_bytes: bytes):
         if data:
             tables.append(pd.DataFrame(data))
 
-    
+    # --- Extract paragraph data (Name:..., Age:..., City:...) ---
     paragraph_data = extract_paragraph_data(doc)
     if paragraph_data is not None:
         tables.append(paragraph_data)
 
     return tables
+
 
 def read_pdf_tables(file_bytes: bytes):
     """Extracts tables from a PDF file using pdfplumber.
@@ -58,16 +60,11 @@ def read_pdf_tables(file_bytes: bytes):
 
     return tables
 
+
 def read_excel(file_bytes: bytes):
     """Reads an Excel file into DataFrames."""
     excel_data = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None)
     return list(excel_data.values())
-
-
-
-
-
-
 
 def extract_paragraph_data(doc):
     """Detect paragraph data like Name:Abi, Age:20, City:Madurai."""
@@ -122,6 +119,47 @@ def extract_paragraph_data(doc):
     # Convert to DataFrame using ordered columns
     df = pd.DataFrame(complete_records, columns=all_keys_ordered)
     # Title-case column names
+    df.columns = [c.strip().title() for c in df.columns]
+    return df
+
+
+def extract_paragraph_data_from_text(text: str):
+    """Parse a block of text for repeated Key: Value records (used for PDFs)."""
+    lines = [l.strip() for l in text.splitlines()]
+    # reuse same logic as docx paragraph extractor but for plain text
+    records = []
+    current = {}
+    key_pattern = re.compile(r"^([\w\s]+?)\s*:")
+    all_keys_ordered = []
+    for line in lines:
+        m = key_pattern.match(line)
+        if m:
+            k = m.group(1).strip()
+            if k not in all_keys_ordered:
+                all_keys_ordered.append(k)
+
+    for line in lines:
+        if not line:
+            if current:
+                records.append(current)
+                current = {}
+            continue
+        if ":" in line:
+            k, v = line.split(":", 1)
+            k, v = k.strip(), v.strip()
+            current[k] = v
+
+    if current:
+        records.append(current)
+
+    if not records or len(all_keys_ordered) < 1:
+        return None
+
+    complete_records = [r for r in records if all((k in r and str(r[k]).strip() != "") for k in all_keys_ordered)]
+    if not complete_records:
+        return None
+
+    df = pd.DataFrame(complete_records, columns=all_keys_ordered)
     df.columns = [c.strip().title() for c in df.columns]
     return df
 
@@ -203,16 +241,19 @@ def clean_table(df: pd.DataFrame) -> pd.DataFrame:
     data = data.dropna(how='all').reset_index(drop=True)
 
     return data
+
+
 def process_file(file_bytes: bytes, filename: str) -> bytes:
     """Main processing function."""
     if filename.endswith(".docx"):
         tables = read_docx_tables(file_bytes)
-elif filename.endswith(".pdf"):
+    elif filename.endswith(".pdf"):
         tables = read_pdf_tables(file_bytes)
     elif filename.endswith(".xlsx"):
         tables = read_excel(file_bytes)
     else:
         raise ValueError("Unsupported file type")
+
     cleaned_tables = []
     for t in tables:
         if not isinstance(t, pd.DataFrame) or t.empty:
@@ -230,4 +271,6 @@ elif filename.endswith(".pdf"):
             table.to_excel(writer, index=False, sheet_name=sheet_name)
     output.seek(0)
     return output.getvalue()
+
+
 
