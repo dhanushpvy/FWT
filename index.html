@@ -81,3 +81,20 @@
                 <button id="download-btn" class="btn btn-success hidden" onclick="downloadFile()">Download Cleaned File</button>
             </div>
         </div>
+
+        <div id="download-section" class="section">
+            <h2>3. Download Complete</h2>
+            <div class="success-message">
+                <div class="success-icon">✓</div>
+                <p>Your cleaned Excel file has been downloaded!</p>
+                <p class="download-info">All document types are converted to cleaned Excel format</p>
+                <button class="btn btn-primary" onclick="resetApp()">Upload Another File</button>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

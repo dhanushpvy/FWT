@@ -160,3 +160,36 @@ function showDownloadButton() {
     document.getElementById('process-success').classList.remove('hidden');
     document.getElementById('download-btn').classList.remove('hidden');
 }
+function downloadFile() {
+    if (!cleanedFileBlob) {
+        showError('No file to download');
+        return;
+    }
+
+    // Create download link
+    const url = window.URL.createObjectURL(cleanedFileBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // Generate cleaned filename
+    const fileNameWithoutExt = originalFileName.split('.').slice(0, -1).join('.');
+    a.download = `cleaned_${fileNameWithoutExt}.xlsx`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    // Go directly to download section
+    showDownloadSection();
+}
+
+function resetApp() {
+    uploadedFile = null;
+    cleanedFileBlob = null;
+    originalFileName = '';
+    fileInput.value = '';
+    fileInfo.classList.add('hidden');
+    
+    showUploadSection();
+}
