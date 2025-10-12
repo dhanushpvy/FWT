@@ -114,3 +114,49 @@ function updateSteps(activeStepId) {
     steps.forEach(step => step.classList.remove('active'));
     document.getElementById(activeStepId).classList.add('active');
 }
+
+
+async function processFile() {
+    if (!uploadedFile) {
+        showError('Please upload a file first');
+        return;
+    }
+
+    // Show processing status
+    document.getElementById('processing-status').classList.remove('hidden');
+    document.getElementById('process-success').classList.add('hidden');
+    document.getElementById('download-btn').classList.add('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            // Get the cleaned file as blob
+            cleanedFileBlob = await response.blob();
+            
+            setTimeout(() => {
+                showDownloadButton();
+            }, 1000);
+        } else {
+            const errorData = await response.json();
+            showError(errorData.error || 'Processing failed');
+            resetConfigureSection();
+        }
+    } catch (error) {
+        showError('Error processing file: ' + error.message);
+        resetConfigureSection();
+    }
+}
+
+function showDownloadButton() {
+    // Hide processing status and show success message with download button
+    document.getElementById('processing-status').classList.add('hidden');
+    document.getElementById('process-success').classList.remove('hidden');
+    document.getElementById('download-btn').classList.remove('hidden');
+}

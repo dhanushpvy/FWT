@@ -59,3 +59,25 @@
                 <button class="btn btn-primary" onclick="showConfigSection()">Next: Configure</button>
             </div>
         </div>
+
+        <div id="configure-section" class="section">
+            <h2>2. Process Document</h2>
+            
+            <!-- Processing Status -->
+            <div id="processing-status" class="processing-indicator">
+                <div class="spinner"></div>
+                <p>Processing your document...</p>
+                <p class="processing-status" id="processingStatus">Extracting tables and cleaning data</p>
+            </div>
+
+            <!-- Success Message (initially hidden) -->
+            <div id="process-success" class="success-box hidden">
+                <div class="success-icon-inline">✓</div>
+                <p class="success-text">File processed successfully!</p>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="showUploadSection()">Back</button>
+                <button id="download-btn" class="btn btn-success hidden" onclick="downloadFile()">Download Cleaned File</button>
+            </div>
+        </div>
