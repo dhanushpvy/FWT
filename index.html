@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Cleanup Automation Tool</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+    <div class="logo-section">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="url(#gradient)"/>
+            <path d="M16 28H20V34H16V28Z" fill="white"/>
+            <path d="M22 22H26V34H22V22Z" fill="white"/>
+            <path d="M28 16H32V34H28V16Z" fill="white"/>
+            <defs>
+                <linearGradient id="gradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#667eea"/>
+                    <stop offset="1" stop-color="#764ba2"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <h1>Document Cleanup Automation Tool</h1>
+    </div>
+    <p>Upload your messy Excel, Word, or PDF files and get them cleaned automatically</p>
+</header>
+
+        <div class="workflow-steps">
+            <div class="step active" id="step-upload">
+                <div class="step-number">1</div>
+                <div class="step-title">Upload</div>
+            </div>
+            <div class="step" id="step-configure">
+                <div class="step-number">2</div>
+                <div class="step-title">Configure & Process</div>
+            </div>
+            <div class="step" id="step-download">
+                <div class="step-number">3</div>
+                <div class="step-title">Download</div>
+            </div>
+        </div>
+
+        <div id="upload-section" class="section active">
+            <h2>1. Upload Document File</h2>
+            <div class="file-types-info">
+                <p><strong>Supported formats:</strong> Excel (.xlsx), Word (.docx), PDF (.pdf)</p>
+            </div>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">Drag & drop your document here</p>
+                <p class="upload-subtext">or click to browse</p>
+                <input type="file" id="fileInput" accept=".xlsx,.docx,.pdf" hidden>
+            </div>
+            <div id="fileInfo" class="file-info hidden">
+                <p>Selected file: <strong id="fileName"></strong></p>
+                <p>File type: <strong id="fileType"></strong></p>
+                <button class="btn btn-primary" onclick="showConfigSection()">Next: Configure</button>
+            </div>
+        </div>
